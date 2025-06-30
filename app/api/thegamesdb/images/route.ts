@@ -18,8 +18,10 @@ export async function POST(request: Request) {
 
     // Get the images
     const response = await fetch(`${baseUrl}/Games/Images?${params}`, {
+      method: "GET",
       headers: {
-        "Content-Type": "application/json",
+        Accept: "application/json",
+        "User-Agent": "GameCoverResolver/1.0",
       },
     })
 
