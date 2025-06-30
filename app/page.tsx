@@ -484,6 +484,17 @@ export default function GameCoverResolver() {
     setIsProcessing(true)
     setProcessedCount(0)
 
+    if (activeApi === "rawg" && !rawgApiKey) {
+      setError("RAWG API requires an API key")
+      toast({
+        title: "API Key Required",
+        description: "RAWG now mandates an API key. Please enter yours before processing.",
+        variant: "destructive",
+      })
+      setIsProcessing(false)
+      return
+    }
+
     // Check API key requirements
     if (activeApi === "thegamesdb" && !tgdbApiKey) {
       setError("TheGamesDB API requires an API key")
@@ -644,12 +655,12 @@ export default function GameCoverResolver() {
               <div className="space-y-4">
                 <div>
                   <p className="text-sm">
-                    RAWG is the largest video game database with 500,000+ games. Works without an API key (limited to 1
-                    request per second) or with a free API key (20,000 requests per month).
+                    RAWG is the largest video-game database with 500 000&#43; games. A (free) API key is now required
+                    for all requests.
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="rawg-api-key">RAWG API Key (Optional)</Label>
+                  <Label htmlFor="rawg-api-key">RAWG API Key (Required)</Label>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
                       <Input

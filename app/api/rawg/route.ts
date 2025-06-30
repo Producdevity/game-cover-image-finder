@@ -1,16 +1,20 @@
 import { NextResponse } from "next/server"
+const baseUrl = "https://api.rawg.io/api/games" // Declare the baseUrl variable
 
 export async function POST(request: Request) {
   try {
     const { title, platformIds = [], apiKey } = await request.json()
 
-    const baseUrl = "https://api.rawg.io/api/games"
+    if (!apiKey) {
+      return NextResponse.json({ error: "RAWG API key is required" }, { status: 400 })
+    }
+
     const params = new URLSearchParams({
       search: title,
       page_size: "10",
+      key: apiKey, // RAWG requires the key
     })
 
-    if (apiKey) params.append("key", apiKey)
     if (platformIds.length) params.append("platforms", platformIds.join(","))
 
     const rawgRes = await fetch(`${baseUrl}?${params}`, {
