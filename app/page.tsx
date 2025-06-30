@@ -210,28 +210,18 @@ async function fetchGameCoverFromRAWG(title: string, systemName: string, apiKey?
     // Get platform IDs for the system
     const platformIds = PLATFORM_MAPPING[systemName.toLowerCase()] || []
 
-    // Build search URL
-    const baseUrl = "https://api.rawg.io/api/games"
-    const params = new URLSearchParams({
-      search: title,
-      page_size: "10",
+    // NEW – proxy request so we avoid CORS in the browser
+    const proxyRes = await fetch("/api/rawg", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, platformIds, apiKey }),
     })
 
-    if (apiKey) {
-      params.append("key", apiKey)
+    if (!proxyRes.ok) {
+      throw new Error(`RAWG API error: ${proxyRes.status}`)
     }
 
-    if (platformIds.length > 0) {
-      params.append("platforms", platformIds.join(","))
-    }
-
-    const response = await fetch(`${baseUrl}?${params}`)
-
-    if (!response.ok) {
-      throw new Error(`RAWG API error: ${response.status}`)
-    }
-
-    const data: RAWGResponse = await response.json()
+    const data: RAWGResponse = await proxyRes.json()
 
     if (data.results && data.results.length > 0) {
       // Find the best match
