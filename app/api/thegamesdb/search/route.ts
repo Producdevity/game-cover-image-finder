@@ -9,21 +9,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "API key is required" }, { status: 400 })
     }
 
-    // Build search URL
+    // Build search URL for v1.1 API
     const baseUrl = "https://api.thegamesdb.net/v1.1"
     const params = new URLSearchParams({
       apikey: apiKey,
       name: title,
-      fields: "platform,release_date,boxart",
+      include: "boxart", // Include boxart data in the response
     })
 
     // Add platform filter if available
     if (systemName) {
-      // We'll handle platform mapping in the client
       params.append("filter[platform]", systemName)
     }
 
-    // Search for the game
+    // Search for the game using v1.1 API
     const response = await fetch(`${baseUrl}/Games/ByGameName?${params}`, {
       method: "GET",
       headers: {

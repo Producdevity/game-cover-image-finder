@@ -292,64 +292,43 @@ async function fetchGameCoverFromTheGamesDB(title: string, systemName: string, a
       throw new Error(`TheGamesDB API error: ${searchResponse.status}`)
     }
 
-    const data: TheGamesDBResponse = await searchResponse.json()
+    const data = await searchResponse.json()
 
     if (data.data && data.data.games && data.data.games.length > 0) {
       // Find the best match
       let bestMatch = data.data.games[0]
 
       // Try to find exact title match first
-      const exactMatch = data.data.games.find((game) => game.game_title.toLowerCase() === title.toLowerCase())
+      const exactMatch = data.data.games.find((game: any) => game.game_title.toLowerCase() === title.toLowerCase())
 
       if (exactMatch) {
         bestMatch = exactMatch
       } else if (platformId) {
         // Find match with correct platform if specified
-        const platformMatch = data.data.games.find((game) => game.platform === platformId)
+        const platformMatch = data.data.games.find((game: any) => game.platform === platformId)
         if (platformMatch) {
           bestMatch = platformMatch
         }
       }
 
-      // If we have boxart, we need to get the image URL
-      if (bestMatch.boxart?.front) {
-        // Use our proxy API route for images
-        const imagesResponse = await fetch("/api/thegamesdb/images", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            gameId: bestMatch.id,
-            apiKey,
-          }),
-        })
+      // Check if we have boxart data included in the response
+      if (data.include && data.include.boxart && data.include.boxart.data) {
+        const gameBoxart = data.include.boxart.data[bestMatch.id.toString()]
 
-        if (!imagesResponse.ok) {
-          throw new Error(`TheGamesDB Images API error: ${imagesResponse.status}`)
-        }
+        if (gameBoxart && gameBoxart.length > 0) {
+          // Find front boxart
+          const frontBoxart = gameBoxart.find((img: any) => img.side === "front")
 
-        const imagesData: TheGamesDBImageData = await imagesResponse.json()
-
-        if (imagesData.data && imagesData.data[bestMatch.id.toString()]) {
-          const gameImages = imagesData.data[bestMatch.id.toString()]
-
-          // Look for boxart front images
-          if (gameImages.boxart) {
-            const frontBoxart = gameImages.boxart.find((img) => img.filename.includes("front"))
-            if (frontBoxart) {
-              return `${imagesData.base_url}/boxart/front/${frontBoxart.filename}`
-            }
-
-            // If no specific front boxart, use the first boxart
-            if (gameImages.boxart.length > 0) {
-              return `${imagesData.base_url}/boxart/front/${gameImages.boxart[0].filename}`
-            }
+          if (frontBoxart) {
+            // Use the appropriate base URL (large for better quality)
+            const baseUrl = data.include.boxart.base_url.large || data.include.boxart.base_url.original
+            return `${baseUrl}${frontBoxart.filename}`
           }
 
-          // If no boxart, try screenshots
-          if (gameImages.screenshots && gameImages.screenshots.length > 0) {
-            return `${imagesData.base_url}/screenshots/${gameImages.screenshots[0].filename}`
+          // If no front boxart, use the first available
+          if (gameBoxart[0]) {
+            const baseUrl = data.include.boxart.base_url.large || data.include.boxart.base_url.original
+            return `${baseUrl}${gameBoxart[0].filename}`
           }
         }
       }
@@ -946,7 +925,7 @@ export default function GameCoverResolver() {
             {outputJson.length > 0 ? (
               <>
                 <div className="flex gap-2">
-                  <Button onClick={copyToClipboard} variant="outline" className="flex-1">
+                  <Button onClick={copyToClipboard} variant="outline" className="flex-1 bg-transparent">
                     {copied ? (
                       <>
                         <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
