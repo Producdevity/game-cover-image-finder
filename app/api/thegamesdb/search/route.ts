@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     }
 
     // Build search URL
-    const baseUrl = "https://api.thegamesdb.net/v1"
+    const baseUrl = "https://api.thegamesdb.net/v1.1"
     const params = new URLSearchParams({
       apikey: apiKey,
       name: title,
@@ -25,8 +25,10 @@ export async function POST(request: Request) {
 
     // Search for the game
     const response = await fetch(`${baseUrl}/Games/ByGameName?${params}`, {
+      method: "GET",
       headers: {
-        "Content-Type": "application/json",
+        Accept: "application/json",
+        "User-Agent": "GameCoverResolver/1.0",
       },
     })
 

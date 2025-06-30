@@ -508,6 +508,7 @@ export default function GameCoverResolver() {
   const [totalCount, setTotalCount] = useState(0)
   const [activeApi, setActiveApi] = useState<ApiType>("rawg")
   const { toast } = useToast()
+  const [showAllPreviews, setShowAllPreviews] = useState(false)
 
   const processGames = async () => {
     setError("")
@@ -866,6 +867,31 @@ export default function GameCoverResolver() {
               placeholder="Paste your JSON here..."
               className="min-h-[400px] font-mono text-sm"
             />
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  try {
+                    const parsed = JSON.parse(inputJson)
+                    setInputJson(JSON.stringify(parsed, null, 2))
+                    toast({
+                      title: "JSON Prettified!",
+                      description: "Your JSON has been formatted for better readability.",
+                    })
+                  } catch (err) {
+                    toast({
+                      title: "Invalid JSON",
+                      description: "Please check your JSON syntax before prettifying.",
+                      variant: "destructive",
+                    })
+                  }
+                }}
+                variant="outline"
+                size="sm"
+                disabled={!inputJson.trim()}
+              >
+                Prettify JSON
+              </Button>
+            </div>
 
             {error && (
               <Alert variant="destructive">
@@ -948,8 +974,8 @@ export default function GameCoverResolver() {
                 {/* Preview Section */}
                 <div className="mt-6">
                   <h3 className="text-lg font-semibold mb-4">Preview</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[300px] overflow-y-auto">
-                    {outputJson.slice(0, 6).map((game, index) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto">
+                    {(showAllPreviews ? outputJson : outputJson.slice(0, 6)).map((game, index) => (
                       <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg">
                         {game.imageUrl ? (
                           <img
@@ -969,12 +995,22 @@ export default function GameCoverResolver() {
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate">{game.title}</p>
                           <p className="text-xs text-muted-foreground truncate">{game.systemName}</p>
+                          {game.imageUrl && <p className="text-xs text-green-600">✓ Cover found</p>}
                         </div>
                       </div>
                     ))}
-                    {outputJson.length > 6 && (
-                      <div className="flex items-center justify-center p-3 border rounded-lg border-dashed">
-                        <p className="text-sm text-muted-foreground">+{outputJson.length - 6} more games</p>
+                    {outputJson.length > 6 && !showAllPreviews && (
+                      <div className="col-span-full flex justify-center">
+                        <Button variant="outline" onClick={() => setShowAllPreviews(true)} className="w-full">
+                          Show {outputJson.length - 6} more games
+                        </Button>
+                      </div>
+                    )}
+                    {showAllPreviews && outputJson.length > 6 && (
+                      <div className="col-span-full flex justify-center">
+                        <Button variant="outline" onClick={() => setShowAllPreviews(false)} className="w-full">
+                          Show less
+                        </Button>
                       </div>
                     )}
                   </div>
